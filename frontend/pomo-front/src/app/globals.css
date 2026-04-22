@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+:root {
+  --background: #fdf6ec;
+  --foreground: #3e1f00;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Steam animations for the coffee cup */
+@keyframes steam-rise {
+  0%   { transform: translateY(0)    scaleX(1);   opacity: 0.8; }
+  100% { transform: translateY(-18px) scaleX(1.4); opacity: 0; }
+}
+
+.animate-steam-1 { animation: steam-rise 2s ease-out infinite; }
+.animate-steam-2 { animation: steam-rise 2s ease-out 0.6s infinite; }
+.animate-steam-3 { animation: steam-rise 2s ease-out 1.2s infinite; }

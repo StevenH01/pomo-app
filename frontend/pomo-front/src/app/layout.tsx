@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "PomoCoffee",
-  description: "Stay focused, one cup at a time.",
+  title: "Pomo — Coffee or F1",
+  description: "Stay focused, your way. Cups of coffee or laps around an F1 circuit.",
 };
 
 export default function RootLayout({

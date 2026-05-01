@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import PomodoroTimer from '../components/PomodoroTimer';
 import TaskList from '../components/TaskList';
 import ThemeSwitcher from '../components/ThemeSwitcher';
 import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
+import { getCurrentRaceWeek } from '../lib/f1Calendar';
 
 interface Task {
   id: number;
@@ -12,7 +13,7 @@ interface Task {
   completed: boolean;
 }
 
-const API_BASE = 'http://localhost:8080/api';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:8080/api';
 
 function HomeInner() {
   const { theme } = useTheme();
@@ -22,6 +23,7 @@ function HomeInner() {
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
 
   const selectedTask = tasks.find((t) => t.id === selectedTaskId) ?? null;
+  const race = useMemo(() => getCurrentRaceWeek(), []);
 
   useEffect(() => {
     fetchTasks();
@@ -84,52 +86,100 @@ function HomeInner() {
 
   function handleSessionComplete() {
     if (selectedTask) {
-      // Optionally auto-complete task after session — user can do it manually
+      // user can complete tasks manually
     }
   }
 
-  // Theme tokens for the page chrome
-  const pageBg = isF1
-    ? 'bg-linear-to-br from-zinc-950 via-zinc-900 to-red-950'
-    : 'bg-linear-to-br from-amber-50 to-orange-100';
-  const titleColor = isF1 ? 'text-zinc-50' : 'text-amber-900';
-  const subtitleColor = isF1 ? 'text-zinc-400' : 'text-amber-700';
-  const cardBg = isF1
-    ? 'bg-zinc-900/70 ring-1 ring-zinc-800'
-    : 'bg-white/70';
-  const dividerColor = isF1 ? 'bg-zinc-800' : 'bg-amber-200';
-  const footerColor = isF1 ? 'text-zinc-600' : 'text-amber-400';
-  const titleFont = isF1
-    ? { fontFamily: 'Arial Black, Impact, sans-serif', letterSpacing: '0.05em' }
-    : { fontFamily: 'Georgia, serif' };
+  if (isF1) {
+    return (
+      <div className="min-h-screen bg-black text-zinc-100 font-mono">
+        {/* Top broadcast bar */}
+        <div className="border-b border-zinc-800 bg-zinc-950">
+          <div className="max-w-6xl mx-auto px-4 py-2 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="bg-red-600 text-white text-[10px] font-bold tracking-[0.25em] px-2 py-1">
+                LIVE
+              </span>
+              <span className="text-[11px] tracking-[0.25em] text-zinc-500 hidden sm:inline">
+                F1 RACE REPLAY · POMODORO
+              </span>
+            </div>
+            <ThemeSwitcher />
+          </div>
+        </div>
 
+        {/* Race title bar — country, name, date */}
+        <div className="border-b border-zinc-800 bg-linear-to-r from-zinc-900 via-zinc-950 to-zinc-900">
+          <div className="max-w-6xl mx-auto px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <div className="text-[10px] tracking-[0.25em] text-zinc-500">
+                2026 ROUND {String(race.round).padStart(2, '0')} · {new Date(race.raceDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase()}
+              </div>
+              <div className="text-lg font-bold tracking-wide text-white mt-0.5">
+                {race.name.toUpperCase()}
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-[10px] tracking-[0.25em] text-zinc-500">CIRCUIT</div>
+              <div className="text-sm font-bold text-zinc-200 tracking-wider">
+                {race.circuit.toUpperCase()} · {race.country.toUpperCase()}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main grid */}
+        <div className="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)] gap-6">
+          <div>
+            <PomodoroTimer
+              selectedTask={selectedTask}
+              onSessionComplete={handleSessionComplete}
+            />
+          </div>
+          <div>
+            <TaskList
+              tasks={tasks}
+              selectedTaskId={selectedTaskId}
+              onSelect={handleSelectTask}
+              onAdd={handleAddTask}
+              onToggleComplete={handleToggleComplete}
+              onDelete={handleDeleteTask}
+            />
+          </div>
+        </div>
+
+        {/* Bottom status bar */}
+        <div className="border-t border-zinc-800 bg-zinc-950 mt-6">
+          <div className="max-w-6xl mx-auto px-4 py-2 flex items-center justify-between text-[10px] tracking-[0.2em] text-zinc-500">
+            <span>STATUS · CONNECTED</span>
+            <span>25:00 STINT · 05:00 IN-LAP · 15:00 PIT WINDOW</span>
+            <span>v1.0</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Coffee theme (unchanged) ──
   return (
-    <div className={`min-h-screen px-4 py-10 ${pageBg}`}>
+    <div className="min-h-screen px-4 py-10 bg-linear-to-br from-amber-50 to-orange-100">
       <div className="max-w-5xl mx-auto flex flex-col items-center gap-6">
-
-        {/* Theme switcher */}
         <div className="self-end">
           <ThemeSwitcher />
         </div>
 
-        {/* Header */}
         <header className="text-center">
-          <h1 className={`text-4xl font-bold tracking-tight ${titleColor}`} style={titleFont}>
-            {isF1 ? '🏎️ PomoGrid' : '☕ PomoCoffee'}
+          <h1 className="text-4xl font-bold tracking-tight text-amber-900" style={{ fontFamily: 'Georgia, serif' }}>
+            ☕ PomoCoffee
           </h1>
-          <p className={`mt-1 text-sm ${subtitleColor}`}>
-            {isF1
-              ? 'Lights out, head down — finish the lap before the chequered flag.'
-              : 'Stay focused, one cup at a time.'}
+          <p className="mt-1 text-sm text-amber-700">
+            Stay focused, one cup at a time.
           </p>
         </header>
 
-        {/* Main layout */}
         <div className="w-full flex flex-col lg:flex-row gap-10 items-start justify-center">
-
-          {/* Timer */}
           <div className="shrink-0 w-full lg:w-auto flex justify-center">
-            <div className={`backdrop-blur-sm rounded-3xl shadow-xl p-8 w-full max-w-xl ${cardBg}`}>
+            <div className="bg-white/70 backdrop-blur-sm rounded-3xl shadow-xl p-8 w-full max-w-sm">
               <PomodoroTimer
                 selectedTask={selectedTask}
                 onSessionComplete={handleSessionComplete}
@@ -137,12 +187,10 @@ function HomeInner() {
             </div>
           </div>
 
-          {/* Divider */}
-          <div className={`hidden lg:block w-px self-stretch ${dividerColor}`} />
+          <div className="hidden lg:block w-px bg-amber-200 self-stretch" />
 
-          {/* Task list */}
           <div className="flex-1 w-full flex justify-center">
-            <div className={`backdrop-blur-sm rounded-3xl shadow-xl p-8 w-full max-w-md ${cardBg}`}>
+            <div className="bg-white/70 backdrop-blur-sm rounded-3xl shadow-xl p-8 w-full max-w-md">
               <TaskList
                 tasks={tasks}
                 selectedTaskId={selectedTaskId}
@@ -155,7 +203,7 @@ function HomeInner() {
           </div>
         </div>
 
-        <footer className={`text-xs ${footerColor}`}>
+        <footer className="text-amber-400 text-xs">
           25 min focus · 5 min break · long break every 4 sessions
         </footer>
       </div>
